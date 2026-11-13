@@ -1,263 +1,339 @@
 
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useRef, useState, FormEvent } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
+  Heart,
+  Music2,
   CalendarDays,
   MapPin,
   Clock,
-  Heart,
-  Gift,
-  Music2,
-  CheckCircle2,
   Flower2,
   Sparkles,
+  Gift,
+  CheckCircle2,
   ChevronDown,
-  Mail,
-  Camera,
-  Stars,
+  ArrowUp,
+  Send,
 } from "lucide-react";
-
-// ==========================================
-// 1. COUPLE DETAILS
-// ==========================================
 
 const couple = {
   groom: "Alexander",
   bride: "Isabella",
   groomFull: "Alexander James",
   brideFull: "Isabella Rose",
-  date: "18 September 2027",
+  weddingDate: "18 September 2027",
   venue: "Villa di Bella Vista",
-  address: "Tuscany, Italy",
-  mapUrl: "https://maps.google.com/?q=Tuscany+Italy",
-  whatsapp: "", // Add WhatsApp number with country code, e.g. 919876543210
+  location: "Tuscany, Italy",
+  mapUrl:
+    "https://www.google.com/maps/search/?api=1&query=Villa+di+Bella+Vista+Tuscany+Italy",
+  whatsapp: "",
+  musicUrl: "/music/romantic-song.mp3",
 };
-
-// ==========================================
-// 2. WEDDING EVENTS
-// ==========================================
 
 const events = [
   {
-    day: "16 SEP",
+    number: "01",
+    date: "16 SEP",
     title: "Welcome Dinner",
+    description:
+      "An intimate evening of warm welcomes, beautiful conversations and a lovely dinner under the stars.",
     time: "7:00 PM onwards",
-    place: "Villa Garden",
-    note: "An elegant evening of fine dining, music and celebration.",
-    icon: "✧",
+    location: "Villa Garden",
   },
   {
-    day: "17 SEP",
+    number: "02",
+    date: "17 SEP",
     title: "Garden Party",
+    description:
+      "Join us for an enchanting garden celebration filled with laughter, music and unforgettable moments.",
     time: "4:00 PM onwards",
-    place: "The Rose Garden",
-    note: "An afternoon filled with laughter, flowers and beautiful memories.",
-    icon: "❀",
+    location: "The Rose Garden",
   },
   {
-    day: "18 SEP",
+    number: "03",
+    date: "18 SEP",
     title: "The Wedding Ceremony",
+    description:
+      "The day our forever begins. We invite you to witness and celebrate our wedding ceremony.",
     time: "5:30 PM",
-    place: "Villa di Bella Vista",
-    note: "Two souls, one heart, and a lifetime of love.",
-    icon: "♡",
+    location: "Villa di Bella Vista",
   },
   {
-    day: "19 SEP",
+    number: "04",
+    date: "19 SEP",
     title: "Grand Reception",
+    description:
+      "One final evening of celebration, dancing and beautiful memories with the people we love.",
     time: "7:30 PM onwards",
-    place: "The Grand Ballroom",
-    note: "Let's celebrate a beautiful beginning together.",
-    icon: "✧",
+    location: "The Grand Ballroom",
   },
 ];
 
-// ==========================================
-// 3. MAIN INVITATION COMPONENT
-// ==========================================
-
-export default function Invitation() {
+export default function WeddingInvitation() {
   const [opened, setOpened] = useState(false);
-  const [name, setName] = useState("");
-  const [guests, setGuests] = useState("2");
+  const [curtainsOpened, setCurtainsOpened] = useState(false);
+
+  const [musicOn, setMusicOn] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const [guestName, setGuestName] = useState("");
+  const [guestCount, setGuestCount] = useState("2");
   const [attendance, setAttendance] = useState("Joyfully accepts");
   const [sent, setSent] = useState(false);
-  const [musicOn, setMusicOn] = useState(false);
 
-  // ========================================
-  // 4. WHATSAPP RSVP FUNCTION
-  // ========================================
+  const toggleMusic = async () => {
+    const audio = audioRef.current;
 
-  function sendRsvp(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+    if (!audio) return;
+
+    if (musicOn) {
+      audio.pause();
+      setMusicOn(false);
+      return;
+    }
+
+    try {
+      await audio.play();
+      setMusicOn(true);
+    } catch {
+      setMusicOn(false);
+      alert(
+        "Please add your wedding music file at public/music/wedding-music.mp3"
+      );
+    }
+  };
+
+  const handleRSVP = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
     const message = [
       "Wedding RSVP",
-      `Name: ${name}`,
-      `Attendance: ${attendance}`,
-      `Guests: ${guests}`,
-      `Wedding: ${couple.groom} & ${couple.bride}`,
+      "",
+      `Name: ${guestName}`,
+      `Number of Guests: ${guestCount}`,
+      `Response: ${attendance}`,
+      "",
+      `Wedding Couple: ${couple.groom} & ${couple.bride}`,
+      `Wedding Date: ${couple.weddingDate}`,
+      `Venue: ${couple.venue}, ${couple.location}`,
     ].join("\n");
 
     const phone = couple.whatsapp.replace(/\D/g, "");
 
-    const url = phone
+    const whatsappLink = phone
       ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
       : `https://wa.me/?text=${encodeURIComponent(message)}`;
 
-    window.open(url, "_blank", "noopener,noreferrer");
+    window.open(whatsappLink, "_blank", "noopener,noreferrer");
     setSent(true);
-  }
-
-  // ========================================
-  // 5. WEBSITE CONTENT
-  // ========================================
+  };
 
   return (
-    <main>
+    <main className="wedding">
+      {/* AUDIO */}
+      <audio
+        ref={audioRef}
+        src={couple.musicUrl}
+        loop
+        preload="none"
+        onEnded={() => setMusicOn(false)}
+      />
 
-      {/* ===================================
-          OPENING CURTAIN SCREEN
-      =================================== */}
+      {/* =========================================
+          OPENING INVITATION
+      ========================================= */}
 
-      <AnimatePresence>
+      <AnimatePresence
+        onExitComplete={() => setCurtainsOpened(true)}
+      >
         {!opened && (
           <motion.div
             className="intro"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 1.2 }}
+            transition={{
+              opacity: {
+                duration: 0.8,
+                delay: 1.6,
+              },
+            }}
           >
-
+            {/* LEFT CURTAIN */}
             <motion.div
               className="curtain curtainLeft"
               initial={{ x: 0 }}
               exit={{ x: "-105%" }}
-              transition={{ duration: 2, delay: 0.2 }}
+              transition={{
+                duration: 2,
+                delay: 0.2,
+                ease: [0.76, 0, 0.24, 1],
+              }}
             />
 
+            {/* RIGHT CURTAIN */}
             <motion.div
               className="curtain curtainRight"
               initial={{ x: 0 }}
               exit={{ x: "105%" }}
-              transition={{ duration: 2, delay: 0.2 }}
+              transition={{
+                duration: 2,
+                delay: 0.2,
+                ease: [0.76, 0, 0.24, 1],
+              }}
             />
 
+            {/* DECORATIVE DETAILS */}
+            <div className="introDecoration">
+              <span>✧</span>
+              <span>❦</span>
+              <span>✧</span>
+            </div>
+
+            {/* INTRO CONTENT */}
             <motion.div
               className="introContent"
               initial={{ opacity: 0, y: 25 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.2 }}
+              transition={{
+                duration: 1,
+                delay: 0.5,
+                ease: "easeOut",
+              }}
             >
-              <span className="eyebrow">
+              <p className="eyebrow">
                 A CELEBRATION OF LOVE
-              </span>
+              </p>
 
+              {/* A & I MONOGRAM */}
               <div className="monogram">
-                A <i>&</i> I
+                <span>A</span>
+                <i>&</i>
+                <span>I</span>
               </div>
 
-              <p>THE WEDDING OF</p>
+              <p className="introSubtitle">
+                THE WEDDING OF
+              </p>
 
-              <h1>
+              <h1 className="introNames">
                 {couple.groom}
                 <span> & </span>
                 {couple.bride}
               </h1>
 
+              <p className="introMessage">
+                Together with their families, they invite you
+                <br />
+                to celebrate the beginning of their forever.
+              </p>
+
+              {/* OPEN BUTTON */}
               <button
+                type="button"
                 className="openButton"
                 onClick={() => setOpened(true)}
               >
-                Open Invitation
-                <Heart size={15} />
+                <span>OPEN INVITATION</span>
+                <Heart size={16} />
               </button>
 
-              <small>{couple.date}</small>
+              <p className="introBottom">
+                WITH LOVE, ALWAYS
+              </p>
             </motion.div>
-
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ===================================
+      {/* =========================================
           MAIN WEBSITE
-      =================================== */}
+      ========================================= */}
 
       <div className="site">
 
         {/* NAVIGATION */}
-
         <header className="topbar">
+          <a href="#home" className="brand">
+            A <span>&</span> I
+          </a>
 
-          <span className="brand">
-            {couple.groom} & {couple.bride}
-          </span>
 
           <button
-            className="music"
-            onClick={() => setMusicOn(!musicOn)}
-            aria-label="Toggle music"
+            type="button"
+            className={`music ${musicOn ? "musicActive" : ""}`}
+            onClick={toggleMusic}
+            aria-label={musicOn ? "Pause music" : "Play music"}
           >
-            <Music2 size={16} />
-
-            {musicOn ? "Music on" : "Music"}
+            <Music2 size={14} />
+            <span>{musicOn ? "MUSIC ON" : "MUSIC"}</span>
           </button>
-
         </header>
 
-        {/* =================================
-            HERO / WEDDING COVER
-        ================================= */}
+        {/* =========================================
+            HERO SECTION
+        ========================================= */}
 
-        <section className="hero">
-
+        <section className="hero" id="home">
           <div className="heroOrnament">
-            ❧
+            <Flower2 size={38} strokeWidth={1} />
           </div>
 
-          <p className="eyebrow">
-            TOGETHER WITH THEIR FAMILIES
-          </p>
-
-          <h1>
-            {couple.groom}
-            <span className="amp">&</span>
-            {couple.bride}
-          </h1>
-
-          <p className="heroLine">
-            invite you to celebrate
-            the beginning of their forever
-          </p>
-
-          <div className="datePill">
-            <CalendarDays size={16} />
-            {couple.date}
-          </div>
-
-          {/* CSS PALACE ILLUSTRATION */}
-
-          <div
-            className="houseArt"
-            role="img"
-            aria-label="Illustrated romantic wedding palace"
+          <motion.div
+            className="heroContent"
+            initial={{ opacity: 0, y: 20 }}
+            animate={
+              curtainsOpened
+                ? { opacity: 1, y: 0 }
+                : { opacity: 0, y: 20 }
+            }
+            transition={{
+              duration: 1,
+              delay: 0.2,
+              ease: "easeOut",
+            }}
           >
+            <p className="eyebrow">
+              TOGETHER WITH THEIR FAMILIES
+            </p>
 
+            <h1>
+              {couple.groom}
+              <span className="heroAmp">&</span>
+              {couple.bride}
+            </h1>
+
+            <p className="heroLine">
+              Request the pleasure of your company
+              <br />
+              as they begin their forever.
+            </p>
+          </motion.div>
+
+          {/* PALACE ILLUSTRATION */}
+          <motion.div
+            className="houseArt"
+            initial={{ opacity: 0, y: 20 }}
+            animate={
+              curtainsOpened
+                ? { opacity: 1, y: 0 }
+                : { opacity: 0, y: 20 }
+            }
+            transition={{
+              duration: 1.2,
+              delay: 0.4,
+            }}
+          >
             <div className="sun" />
 
             <div className="palace">
-
-              <div className="roof roofMain" />
-
               <div className="dome" />
 
+              <div className="roof roofMain" />
               <div className="roof roofLeft" />
 
               <div className="building">
-
                 <div className="windows">
                   <i />
                   <i />
@@ -267,37 +343,80 @@ export default function Invitation() {
                 </div>
 
                 <div className="door" />
-
               </div>
 
               <div className="wing wingLeft" />
               <div className="wing wingRight" />
-
             </div>
 
             <div className="garden">
+              <span>♣</span>
               <span>✿</span>
-              <span>❀</span>
+              <span>♣</span>
               <span>✿</span>
-              <span>❀</span>
-              <span>✿</span>
+              <span>♣</span>
             </div>
+          </motion.div>
 
-          </div>
+          {/* DATE: ONLY AFTER CURTAINS OPEN */}
+          <motion.div
+            className="datePill"
+            initial={{ opacity: 0, y: 20 }}
+            animate={
+              curtainsOpened
+                ? { opacity: 1, y: 0 }
+                : { opacity: 0, y: 20 }
+            }
+            transition={{
+              duration: 1,
+              delay: 0.3,
+              ease: "easeOut",
+            }}
+          >
+            <CalendarDays size={17} />
+            <span>{couple.weddingDate}</span>
+          </motion.div>
 
-          <div className="scrollHint">
-            SCROLL TO EXPLORE
-            <ChevronDown size={18} />
-          </div>
+          <motion.p
+            className="eyebrow"
+            initial={{ opacity: 0 }}
+            animate={
+              curtainsOpened
+                ? { opacity: 1 }
+                : { opacity: 0 }
+            }
+            transition={{ duration: 1, delay: 0.6 }}
+            style={{ marginTop: 18 }}
+          >
+            <MapPin
+              size={13}
+              style={{
+                display: "inline",
+                verticalAlign: "middle",
+                marginRight: 7,
+              }}
+            />
+            {couple.location.toUpperCase()}
+          </motion.p>
 
+          <a href="#welcome" className="scrollHint">
+            <span>SCROLL TO EXPLORE</span>
+            <ChevronDown size={16} />
+          </a>
         </section>
 
-        {/* =================================
+        {/* =========================================
             WELCOME SECTION
-        ================================= */}
+        ========================================= */}
 
-        <section className="section welcome">
-
+        <motion.section
+          className="section welcome"
+          id="welcome"
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.8 }}
+        >
           <Flower2 className="sectionIcon" />
 
           <p className="eyebrow">
@@ -311,30 +430,36 @@ export default function Invitation() {
           </h2>
 
           <p className="bodyCopy">
-            Some moments become memories,
-            and some memories become forever.
-            As we begin this beautiful new chapter,
-            we would be delighted to have you by our side.
+            Some moments in life become even more beautiful
+            when shared with the people who mean the most.
+            As we begin this wonderful new chapter together,
+            it would mean the world to have you by our side.
           </p>
 
           <div className="signature">
             With love,
-
             <strong>
               {couple.groom} & {couple.bride}
             </strong>
           </div>
+        </motion.section>
 
-        </section>
+        {/* =========================================
+            OUR STORY
+        ========================================= */}
 
-        {/* =================================
-            OUR LOVE STORY
-        ================================= */}
-
-        <section className="section story">
+        <motion.section
+          className="section story"
+          id="story"
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.8 }}
+        >
+          <Sparkles className="sectionIcon" />
 
           <p className="eyebrow">
-            THE BEGINNING OF FOREVER
+            TWO HEARTS, ONE JOURNEY
           </p>
 
           <h2>
@@ -342,106 +467,92 @@ export default function Invitation() {
           </h2>
 
           <div className="storyCard">
-
             <div className="storyImage">
+              <div className="storySparkle">✧</div>
+              <div className="heartIllustration">♡</div>
+              <span>FOREVER BEGINS HERE</span>
+            </div>
 
-              <div className="heartIllustration">
-                ♡
+            <div className="storyText">
+              <p>
+                What began as two separate journeys slowly
+                became one beautiful story.
+              </p>
+
+              <p>
+                Through laughter, little moments and countless
+                memories, we discovered something truly special.
+              </p>
+
+              <p>
+                Now, surrounded by the people we love, we are
+                ready to make our promises and begin forever.
+              </p>
+
+              <div className="signature">
+                <strong>
+                  {couple.groom} & {couple.bride}
+                </strong>
               </div>
-
-              <span>
-                two hearts, one beautiful story
-              </span>
-
             </div>
-
-            <p>
-              What started as a beautiful meeting
-              became a thousand little reasons to smile.
-              Through every conversation, every adventure
-              and every dream, we found our favourite
-              person in each other.
-            </p>
-
-            <p>
-              Now, with our families and favourite people
-              around us, we cannot wait to say
-              "I do".
-            </p>
-
-            <div className="signature">
-              Forever begins with you.
-            </div>
-
           </div>
+        </motion.section>
 
-        </section>
-
-        {/* =================================
+        {/* =========================================
             WEDDING EVENTS
-        ================================= */}
+        ========================================= */}
 
-        <section className="section events">
+        <motion.section
+          className="section events"
+          id="events"
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.1 }}
+          transition={{ duration: 0.8 }}
+        >
+          <CalendarDays className="sectionIcon" />
 
           <p className="eyebrow">
-            SAVE THE DATES
+            SAVE THE CELEBRATION
           </p>
 
           <h2>
-            The Wedding
-            <em> Celebrations</em>
+            Wedding <em>Festivities</em>
           </h2>
 
           <p className="bodyCopy">
-            A few special moments,
-            made even more special with you.
+            Four beautiful days filled with love,
+            laughter and unforgettable memories.
+            We cannot wait to celebrate with you.
           </p>
 
           <div className="timeline">
-
             {events.map((event, index) => (
-
               <motion.article
                 className="eventCard"
-                key={event.title}
-                initial={{
-                  opacity: 0,
-                  y: 30,
-                }}
-                whileInView={{
-                  opacity: 1,
-                  y: 0,
-                }}
+                key={event.number}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
                 transition={{
-                  duration: 0.7,
+                  duration: 0.6,
                   delay: index * 0.1,
                 }}
-                viewport={{
-                  once: true,
-                  amount: 0.2,
-                }}
               >
-
                 <div className="eventDate">
-                  {event.day}
+                  {event.date}
                 </div>
 
                 <div className="eventDetails">
-
                   <span className="eventNumber">
-                    0{index + 1}
+                    EVENT {event.number}
                   </span>
 
-                  <h3>
-                    {event.icon} {event.title}
-                  </h3>
+                  <h3>{event.title}</h3>
 
-                  <p>
-                    {event.note}
-                  </p>
+                  <p>{event.description}</p>
 
                   <div className="eventMeta">
-
                     <span>
                       <Clock size={14} />
                       {event.time}
@@ -449,83 +560,80 @@ export default function Invitation() {
 
                     <span>
                       <MapPin size={14} />
-                      {event.place}
+                      {event.location}
                     </span>
-
                   </div>
-
                 </div>
-
               </motion.article>
-
             ))}
-
           </div>
+        </motion.section>
 
-        </section>
+        {/* =========================================
+            VENUE
+        ========================================= */}
 
-        {/* =================================
-            VENUE SECTION
-        ================================= */}
-
-        <section className="section venue">
-
+        <motion.section
+          className="section venue"
+          id="venue"
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.8 }}
+        >
           <MapPin className="sectionIcon" />
 
           <p className="eyebrow">
-            WHERE THE MAGIC HAPPENS
+            A PLACE TO REMEMBER
           </p>
 
           <h2>
-            Meet us <em>there</em>
+            The <em>Venue</em>
           </h2>
 
           <div className="venueCard">
-
             <div className="venueArtwork">
-              ✧
-              <br />
-              THE
-              <br />
-              <b>ROYAL</b>
-              <br />
-              CELEBRATION
-              <br />
-              ✧
+              <Flower2 size={35} strokeWidth={1} />
+
+              <span>WELCOME TO</span>
+
+              <strong>Villa</strong>
+
+              <span>DI BELLA VISTA</span>
             </div>
 
-            <h3>
-              {couple.venue}
-            </h3>
+            <h3>{couple.venue}</h3>
 
-            <p>
-              {couple.address}
-            </p>
+            <p>{couple.location}</p>
 
             <a
-              className="outlineButton"
               href={couple.mapUrl}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
+              className="outlineButton"
             >
-              VIEW ON MAP
-              <MapPin size={14} />
+              <MapPin size={15} />
+              VIEW LOCATION
             </a>
-
           </div>
+        </motion.section>
 
-        </section>
+        {/* =========================================
+            RSVP
+        ========================================= */}
 
-        {/* =================================
-            RSVP SECTION
-        ================================= */}
-
-        <section className="section rsvp">
-
+        <motion.section
+          className="section rsvp"
+          id="rsvp"
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.8 }}
+        >
           <Heart className="sectionIcon" />
 
           <p className="eyebrow">
-            KINDLY REPLY
+            KINDLY RESPOND
           </p>
 
           <h2>
@@ -533,46 +641,52 @@ export default function Invitation() {
           </h2>
 
           <p className="bodyCopy">
-            Your presence is the greatest gift.
-            Please let us know if you can
-            celebrate with us.
+            Your presence would make our celebration
+            even more special. Kindly let us know
+            if you can join us.
           </p>
 
-          <form onSubmit={sendRsvp}>
-
+          <form onSubmit={handleRSVP}>
             <label>
-              Your name
+              YOUR NAME
 
               <input
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
                 placeholder="Enter your full name"
+                value={guestName}
+                onChange={(event) =>
+                  setGuestName(event.target.value)
+                }
                 required
               />
             </label>
 
             <label>
-              Number of guests
+              NUMBER OF GUESTS
 
               <select
-                value={guests}
-                onChange={(e) => setGuests(e.target.value)}
+                value={guestCount}
+                onChange={(event) =>
+                  setGuestCount(event.target.value)
+                }
               >
                 <option value="1">1 Guest</option>
                 <option value="2">2 Guests</option>
                 <option value="3">3 Guests</option>
                 <option value="4">4 Guests</option>
                 <option value="5">5 Guests</option>
+                <option value="6">6 Guests</option>
               </select>
             </label>
 
             <label>
-              Your response
+              YOUR RESPONSE
 
               <select
                 value={attendance}
-                onChange={(e) => setAttendance(e.target.value)}
+                onChange={(event) =>
+                  setAttendance(event.target.value)
+                }
               >
                 <option value="Joyfully accepts">
                   Joyfully accepts
@@ -585,87 +699,91 @@ export default function Invitation() {
             </label>
 
             <button
-              className="submitButton"
               type="submit"
+              className="submitButton"
             >
-              SEND RSVP
-              <Heart size={15} />
+              <span>SEND RSVP</span>
+              <Send size={15} />
             </button>
 
             {sent && (
-
               <p className="success">
-                <CheckCircle2 size={16} />
-                WhatsApp RSVP opened.
-                Please send your message there.
+                <CheckCircle2 size={17} />
+                Your RSVP message has been prepared.
+                Please complete sending it in WhatsApp.
               </p>
-
             )}
-
           </form>
+        </motion.section>
 
-        </section>
+        {/* =========================================
+            GIFTS
+        ========================================= */}
 
-        {/* =================================
-            GIFT SECTION
-        ================================= */}
-
-        <section className="section gifts">
-
+        <motion.section
+          className="section gifts"
+          id="gifts"
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.8 }}
+        >
           <Gift className="sectionIcon" />
 
           <p className="eyebrow">
-            YOUR BLESSINGS ARE ENOUGH
+            A THOUGHTFUL NOTE
           </p>
 
           <h2>
-            Gifts & <em>good wishes</em>
+            Your presence
+            <br />
+            is our <em>present</em>
           </h2>
 
           <p className="bodyCopy">
-            Your love, blessings and presence
-            are all we could ever ask for.
-            Thank you for being part of our story.
+            Having you celebrate this special occasion
+            with us is the greatest gift we could ask for.
+            Your love, blessings and presence mean
+            everything to us.
           </p>
+        </motion.section>
 
-        </section>
+        {/* =========================================
+            FOOTER
+        ========================================= */}
 
-        {/* =================================
-            FINAL FOOTER
-        ================================= */}
-
-        <footer>
-
+        <footer className="footer">
           <div className="footerFlourish">
-            ❧
+            ❦
           </div>
 
-          <p>
-            WITH LOVE AND GRATITUDE
+          <p className="eyebrow">
+            THE BEGINNING OF FOREVER
           </p>
 
           <h2>
             {couple.groom}
-            <i> & </i>
+            <i>&</i>
             {couple.bride}
           </h2>
 
-          <span>
-            {couple.date}
-          </span>
+          <p className="footerDate">
+            {couple.weddingDate.toUpperCase()}
+          </p>
 
           <div className="footerHeart">
-            ♡
+            <Heart size={25} />
           </div>
 
           <p className="footerMessage">
-            WE CAN'T WAIT TO CELEBRATE WITH YOU
+            THANK YOU FOR BEING PART OF OUR STORY
           </p>
 
+          <a href="#home" className="backTop">
+            BACK TO TOP <ArrowUp size={13} />
+          </a>
         </footer>
-
       </div>
-
     </main>
   );
 }
